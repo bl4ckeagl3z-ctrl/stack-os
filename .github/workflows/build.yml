@@ -15,30 +15,27 @@ jobs:
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
         cd pmbootstrap && pip3 install .
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
     - name: Write config
       run: |
         mkdir -p ~/.config ~/.local/var/pmbootstrap
         python3 -c "
-        import os
-        cfg = '[pmbootstrap]\naports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports\nccache_size = 5G\ndevice = samsung-degaswifi\nextra_packages =\nhostname = stack-os\njobs = 2\nkeymap =\nlocale = de_DE\nmirrors_postmarketos = https://mirror.postmarketos.org/postmarketos/\nnonfree_firmware = True\nssh_keys = False\ntimezone = Etc/UTC\nui = xfce4\nusername = user\nwork = /home/runner/.local/var/pmbootstrap\nchannel = edge\nsystemd = never\n'
-        open(os.path.expanduser('~/.config/pmbootstrap.cfg'), 'w').write(cfg)
+        cfg='[pmbootstrap]\naports=/home/runner/.local/var/pmbootstrap/cache_git/pmaports\nccache_size=5G\ndevice=samsung-degaswifi\nextra_packages=\nhostname=stack-os\njobs=2\nkeymap=\nlocale=de_DE\nmirrors_postmarketos=https://mirror.postmarketos.org/postmarketos/\nnonfree_firmware=True\nssh_keys=False\ntimezone=Etc/UTC\nui=xfce4\nusername=user\nwork=/home/runner/.local/var/pmbootstrap\nchannel=edge\nsystemd=never\n'
+        open('/home/runner/.config/pmbootstrap.cfg','w').write(cfg)
         "
     - name: Pull pmaports
-      run: ~/.local/bin/pmbootstrap pull
+      run: /home/runner/.local/bin/pmbootstrap pull
     - name: Build image
       run: |
-        ~/.local/bin/pmbootstrap install --password stackos123 || true
-        ~/.local/bin/pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
-        ~/.local/bin/pmbootstrap chroot --rootfs -- apk add mkbootimg
-        ~/.local/bin/pmbootstrap install --password stackos123
-    - name: Export
+        /home/runner/.local/bin/pmbootstrap install --password stackos123 || true
+        /home/runner/.local/bin/pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
+        /home/runner/.local/bin/pmbootstrap chroot --rootfs -- apk add mkbootimg
+        /home/runner/.local/bin/pmbootstrap install --password stackos123
+    - name: Export and upload
       run: |
         mkdir -p /tmp/export
-        ~/.local/bin/pmbootstrap export /tmp/export || true
-        ls -la /tmp/export/ || true
-    - name: Upload
-      uses: actions/upload-artifact@v4
+        /home/runner/.local/bin/pmbootstrap export /tmp/export || true
+        ls /tmp/export/ || true
+    - uses: actions/upload-artifact@v4
       with:
         name: stack-os-degaswifi
         path: /tmp/export/
