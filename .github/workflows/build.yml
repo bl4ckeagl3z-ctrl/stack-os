@@ -14,7 +14,7 @@ jobs:
     - name: Install pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
-        cd pmbootstrap && pip3 install .
+        cd pmbootstrap && sudo pip3 install .
     - name: Write config
       run: |
         mkdir -p ~/.config ~/.local/var/pmbootstrap
@@ -23,17 +23,17 @@ jobs:
         open('/home/runner/.config/pmbootstrap.cfg','w').write(cfg)
         "
     - name: Pull pmaports
-      run: /home/runner/.local/bin/pmbootstrap pull
+      run: pmbootstrap pull
     - name: Build image
       run: |
-        /home/runner/.local/bin/pmbootstrap install --password stackos123 || true
-        /home/runner/.local/bin/pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
-        /home/runner/.local/bin/pmbootstrap chroot --rootfs -- apk add mkbootimg
-        /home/runner/.local/bin/pmbootstrap install --password stackos123
+        pmbootstrap install --password stackos123 || true
+        pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
+        pmbootstrap chroot --rootfs -- apk add mkbootimg
+        pmbootstrap install --password stackos123
     - name: Export and upload
       run: |
         mkdir -p /tmp/export
-        /home/runner/.local/bin/pmbootstrap export /tmp/export || true
+        pmbootstrap export /tmp/export || true
         ls /tmp/export/ || true
     - uses: actions/upload-artifact@v4
       with:
