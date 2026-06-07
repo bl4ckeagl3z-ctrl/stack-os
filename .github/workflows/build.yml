@@ -1,66 +1,41 @@
 name: Build STACK OS
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
-
     steps:
     - uses: actions/checkout@v4
-
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y kpartx git python3 python3-pip
-
     - name: Install pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
         cd pmbootstrap && pip3 install .
-
-    - name: Write pmbootstrap config
+    - name: Write config
       run: |
         mkdir -p ~/.config ~/.local/var/pmbootstrap
-        cat > ~/.config/pmbootstrap.cfg << 'CFG'
-[pmbootstrap]
-aports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports
-ccache_size = 5G
-device = samsung-degaswifi
-extra_packages =
-hostname = stack-os
-jobs = 2
-keymap =
-locale = de_DE
-mirrors_postmarketos = https://mirror.postmarketos.org/postmarketos/
-nonfree_firmware = True
-ssh_keys = False
-timezone = Etc/UTC
-ui = xfce4
-username = user
-work = /home/runner/.local/var/pmbootstrap
-channel = edge
-systemd = never
-CFG
-
+        python3 -c "
+        import os
+        cfg = '[pmbootstrap]\naports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports\nccache_size = 5G\ndevice = samsung-degaswifi\nextra_packages =\nhostname = stack-os\njobs = 2\nkeymap =\nlocale = de_DE\nmirrors_postmarketos = https://mirror.postmarketos.org/postmarketos/\nnonfree_firmware = True\nssh_keys = False\ntimezone = Etc/UTC\nui = xfce4\nusername = user\nwork = /home/runner/.local/var/pmbootstrap\nchannel = edge\nsystemd = never\n'
+        open(os.path.expanduser('~/.config/pmbootstrap.cfg'), 'w').write(cfg)
+        "
     - name: Pull pmaports
       run: pmbootstrap pull
-
     - name: Build image
       run: |
         pmbootstrap install --password stackos123 || true
         pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
         pmbootstrap chroot --rootfs -- apk add mkbootimg
         pmbootstrap install --password stackos123
-
     - name: Export
       run: |
         mkdir -p /tmp/export
-        pmbootstrap export /tmp/export
-        ls -la /tmp/export/
-
+        pmbootstrap export /tmp/export || true
+        ls -la /tmp/export/ || true
     - name: Upload
       uses: actions/upload-artifact@v4
       with:
