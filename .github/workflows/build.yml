@@ -11,10 +11,8 @@ jobs:
     - uses: actions/checkout@v4
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y kpartx git python3 python3-pip
-    - name: Install pmbootstrap
-      run: |
-        git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git
-        cd pmbootstrap && sudo pip3 install .
+    - name: Clone pmbootstrap
+      run: git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /opt/pmbootstrap
     - name: Write config
       run: |
         mkdir -p ~/.config ~/.local/var/pmbootstrap
@@ -23,17 +21,17 @@ jobs:
         open('/home/runner/.config/pmbootstrap.cfg','w').write(cfg)
         "
     - name: Pull pmaports
-      run: pmbootstrap pull
+      run: python3 /opt/pmbootstrap/pmbootstrap.py pull
     - name: Build image
       run: |
-        pmbootstrap install --password stackos123 || true
-        pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
-        pmbootstrap chroot --rootfs -- apk add mkbootimg
-        pmbootstrap install --password stackos123
-    - name: Export and upload
+        python3 /opt/pmbootstrap/pmbootstrap.py install --password stackos123 || true
+        python3 /opt/pmbootstrap/pmbootstrap.py chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
+        python3 /opt/pmbootstrap/pmbootstrap.py chroot --rootfs -- apk add mkbootimg
+        python3 /opt/pmbootstrap/pmbootstrap.py install --password stackos123
+    - name: Export
       run: |
         mkdir -p /tmp/export
-        pmbootstrap export /tmp/export || true
+        python3 /opt/pmbootstrap/pmbootstrap.py export /tmp/export || true
         ls /tmp/export/ || true
     - uses: actions/upload-artifact@v4
       with:
