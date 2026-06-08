@@ -17,11 +17,9 @@ jobs:
         pip3 install --user /tmp/pmb || true
         python3 -c "open('/usr/local/bin/pmbootstrap','w').write('#!/usr/bin/env python3\nimport sys\nsys.path.insert(0,\"/tmp/pmb\")\nfrom pmb import main\nsys.exit(main())\n')"
         sudo chmod +x /usr/local/bin/pmbootstrap
-        pmbootstrap --version
-    - name: Write config
+    - name: Init pmbootstrap
       run: |
-        mkdir -p ~/.config ~/.local/var/pmbootstrap
-        python3 -c "open('/home/runner/.config/pmbootstrap.cfg','w').write('[pmbootstrap]\naports=/home/runner/.local/var/pmbootstrap/cache_git/pmaports\nccache_size=5G\ndevice=samsung-degaswifi\nextra_packages=\nhostname=stack-os\njobs=2\nkeymap=\nlocale=de_DE\nmirrors_postmarketos=https://mirror.postmarketos.org/postmarketos/\nnonfree_firmware=True\nssh_keys=False\ntimezone=Etc/UTC\nui=xfce4\nusername=user\nwork=/home/runner/.local/var/pmbootstrap\nchannel=edge\nsystemd=never\n')"
+        printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\n\n\nde_DE\nstack-os\nn\n' | pmbootstrap init
     - name: Pull pmaports
       run: pmbootstrap pull
     - name: Build image
