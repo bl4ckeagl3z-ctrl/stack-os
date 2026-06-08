@@ -17,6 +17,7 @@ jobs:
         sudo cp pmb_wrapper.py /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
         python3 fix_initfs.py
+        grep -n "truncate" /tmp/pmb/pmb/chroot/initfs.py || echo "PATCH NOT APPLIED"
         pmbootstrap --version
     - name: Init pmbootstrap
       run: printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' | pmbootstrap init
@@ -25,7 +26,14 @@ jobs:
     - name: Pull pmaports
       run: pmbootstrap pull
     - name: Build image
-      run: pmbootstrap install --password stackos123
+      run: |
+        pmbootstrap install --password stackos123 || true
+        echo "=== MKINITFS LOG ==="
+        tail -30 /home/runner/.local/var/pmbootstrap/log.txt || true
+        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-default.modules" || true
+        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-device-samsung-degaswifi.modules" || true
+        sudo modprobe -r loop 2>/dev/null || true; sudo modprobe loop max_part=16 2>/dev/null || true
+        pmbootstrap install --password stackos123
     - name: Export
       run: |
         mkdir -p /tmp/export
