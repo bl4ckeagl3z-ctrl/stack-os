@@ -14,20 +14,18 @@ jobs:
     - name: Setup pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
-        pip3 install --user /tmp/pmb || true
-        python3 -c "open('/usr/local/bin/pmbootstrap','w').write('#!/usr/bin/env python3\nimport sys\nsys.path.insert(0,\"/tmp/pmb\")\nfrom pmb import main\nsys.exit(main())\n')"
+        sudo cp pmb_wrapper.py /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
+        python3 fix_initfs.py
+        pmbootstrap --version
     - name: Init pmbootstrap
-      run: |
-        printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\n\n\nde_DE\nstack-os\nn\n' | pmbootstrap init
+      run: printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' | pmbootstrap init
+    - name: Enable loop partitions
+      run: sudo modprobe -r loop 2>/dev/null || true; sudo modprobe loop max_part=16 2>/dev/null || true
     - name: Pull pmaports
       run: pmbootstrap pull
     - name: Build image
-      run: |
-        pmbootstrap install --password stackos123 || true
-        pmbootstrap chroot --rootfs -- sh -c "printf '' > /usr/share/mkinitfs/modules/00-default.modules"
-        pmbootstrap chroot --rootfs -- apk add mkbootimg
-        pmbootstrap install --password stackos123
+      run: pmbootstrap install --password stackos123
     - name: Export
       run: |
         mkdir -p /tmp/export
