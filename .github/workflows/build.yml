@@ -15,7 +15,7 @@ jobs:
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
         pip3 install --user /tmp/pmb || true
-        printf '#!/bin/sh\ncd /tmp/pmb && exec python3 -m pmb "$@"\n' | sudo tee /usr/local/bin/pmbootstrap
+        printf '#!/usr/bin/env python3\nfrom pmb import main\nimport sys\nsys.exit(main())\n' | sudo tee /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
         pmbootstrap --version
     - name: Write config
