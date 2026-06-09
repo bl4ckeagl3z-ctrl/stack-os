@@ -16,28 +16,23 @@ jobs:
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
         sudo cp pmb_wrapper.py /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
-        python3 fix_initfs.py
         pmbootstrap --version
     - name: Init pmbootstrap
       run: printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' | pmbootstrap init
-    - name: Enable loop partitions
-      run: sudo modprobe -r loop 2>/dev/null || true; sudo modprobe loop max_part=16 2>/dev/null || true
     - name: Pull pmaports
       run: pmbootstrap pull
-    - name: Build image
+    - name: Install packages
+      run: pmbootstrap install --password stackos123 || true
+    - name: Fix and run mkinitfs manually
       run: |
-        pmbootstrap install --password stackos123 || true
-        echo "=== REAL MKINITFS ERROR ==="
-        python3 -c "
-        log=open('/home/runner/.local/var/pmbootstrap/log.txt').read()
-        idx=log.rfind('^^^^^^')
-        print(log[max(0,idx-2000):idx+50] if idx>0 else 'not found')
-        "
-    - name: Export
+        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-default.modules"
+        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-device-samsung-degaswifi.modules"
+        pmbootstrap chroot --rootfs -- mkinitfs
+    - name: Export images
       run: |
         mkdir -p /tmp/export
-        pmbootstrap export /tmp/export || true
-        ls /tmp/export/ || true
+        pmbootstrap export /tmp/export
+        ls -la /tmp/export/
     - uses: actions/upload-artifact@v4
       with:
         name: stack-os-degaswifi
