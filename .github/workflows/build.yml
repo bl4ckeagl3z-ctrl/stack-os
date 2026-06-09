@@ -23,10 +23,12 @@ jobs:
       run: pmbootstrap pull
     - name: Install packages
       run: pmbootstrap install --password stackos123 || true
-    - name: Fix and run mkinitfs manually
+    - name: Fix and run mkinitfs
       run: |
         pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-default.modules"
         pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-device-samsung-degaswifi.modules"
+        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules-extra/00-default-extra.modules"
+        pmbootstrap chroot --rootfs -- sh -c "mkdir -p /usr/lib/modules/3.10.0-Downstream && touch /usr/lib/modules/3.10.0-Downstream/modules.dep"
         pmbootstrap chroot --rootfs -- mkinitfs
     - name: Export images
       run: |
