@@ -25,7 +25,7 @@ jobs:
 
     - name: Init pmbootstrap
       run: |
-        printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nphosh\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' \
+        printf '\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' \
           | pmbootstrap init
 
     - name: Pull pmaports
