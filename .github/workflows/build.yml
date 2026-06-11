@@ -3,38 +3,64 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
     - uses: actions/checkout@v4
+
     - name: Install dependencies
-      run: sudo apt-get update && sudo apt-get install -y kpartx git python3 python3-pip
+      run: |
+        sudo apt-get update && sudo apt-get install -y \
+          kpartx git python3 python3-pip
+
     - name: Setup pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
         sudo cp pmb_wrapper.py /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
         pmbootstrap --version
+
     - name: Init pmbootstrap
-      run: printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' | pmbootstrap init
+      run: |
+        printf '\n\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nphosh\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' \
+          | pmbootstrap init
+
     - name: Pull pmaports
       run: pmbootstrap pull
-    - name: Install packages
-      run: pmbootstrap install --password stackos123 || true
-    - name: Fix and run mkinitfs
+
+    - name: Install attempt 1 (expected to fail)
       run: |
-        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-default.modules"
-        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules/00-device-samsung-degaswifi.modules"
-        pmbootstrap chroot --rootfs -- sh -c "truncate -s 0 /usr/share/mkinitfs/modules-extra/00-default-extra.modules"
-        pmbootstrap chroot --rootfs -- sh -c "mkdir -p /usr/lib/modules/3.10.0-Downstream && touch /usr/lib/modules/3.10.0-Downstream/modules.dep"
-        pmbootstrap chroot --rootfs -- mkinitfs
-    - name: Export images
+        pmbootstrap install \
+          --android-recovery-zip \
+          --recovery-install-partition=data \
+          --password stackos123 || true
+
+    - name: Apply fixes
+      run: |
+        ROOTFS="$HOME/.local/var/pmbootstrap/chroot_rootfs_samsung-degaswifi"
+        sudo mkdir -p "$ROOTFS/usr/lib/modules/3.10.0-Downstream"
+        sudo touch "$ROOTFS/usr/lib/modules/3.10.0-Downstream/modules.dep"
+        sudo truncate -s 0 "$ROOTFS/usr/share/mkinitfs/modules/00-default.modules" || true
+        sudo truncate -s 0 "$ROOTFS/usr/share/mkinitfs/modules/00-device-samsung-degaswifi.modules" || true
+        sudo truncate -s 0 "$ROOTFS/usr/share/mkinitfs/modules-extra/00-default-extra.modules" || true
+        pmbootstrap chroot -r -- apk add mkbootimg-osm0sis
+
+    - name: Install attempt 2 (creates the ZIP)
+      run: |
+        pmbootstrap install \
+          --android-recovery-zip \
+          --recovery-install-partition=data \
+          --password stackos123
+
+    - name: Export image
       run: |
         mkdir -p /tmp/export
         pmbootstrap export /tmp/export
         ls -la /tmp/export/
+
     - uses: actions/upload-artifact@v4
       with:
         name: stack-os-degaswifi
