@@ -23,10 +23,27 @@ jobs:
         sudo chmod +x /usr/local/bin/pmbootstrap
         pmbootstrap --version
 
-    - name: Init pmbootstrap
+    - name: Create pmbootstrap config
       run: |
-        printf '\n\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\nn\nmkbootimg\n\nde_DE\nstack-os\nn\n' \
-          | pmbootstrap init
+        mkdir -p ~/.config
+        cat > ~/.config/pmbootstrap.cfg << 'CFGEOF'
+[pmbootstrap]
+aports = /home/runner/.local/var/pmbootstrap/cache_git/pmaports
+device = samsung-degaswifi
+hostname = stack-os
+jobs = 2
+kernel = downstream
+keymap =
+locale = de_DE.UTF-8
+mirror_alpine = https://dl-cdn.alpinelinux.org/alpine/
+timezone = UTC
+ui = xfce4
+ui_extras = False
+user = user
+work = /home/runner/.local/var/pmbootstrap
+channel = edge
+systemd = never
+CFGEOF
 
     - name: Pull pmaports
       run: pmbootstrap pull
