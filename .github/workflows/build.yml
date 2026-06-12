@@ -17,15 +17,13 @@ jobs:
     - name: Setup pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
-        sudo cp /tmp/pmb/pmb_wrapper.py /usr/local/bin/pmbootstrap
+        sudo cp /tmp/pmb/pmbootstrap.py /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
         pmbootstrap --version
 
     - name: Init pmbootstrap
       run: |
-        # EXTRA NEULINES AM ENDE fangen "Change them?" und spätere Abfragen sicher ab
         printf '\n\nedge\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\n\n\n\n\n' | pmbootstrap --details-to-stdout init
-        # Wunsch-Apps für STACK OS hinzufügen
         pmbootstrap config extra_packages "xournalpp,firefox,tasks"
 
     - name: Pull pmaports
@@ -51,7 +49,6 @@ jobs:
       run: |
         mkdir -p /tmp/export
         pmbootstrap export /tmp/export
-        # Kopiert das fertige Recovery-Flash-ZIP in den Upload-Ordner
         cp -v /home/runner/.local/var/pmbootstrap/images/samsung-degaswifi/*.zip /tmp/export/ || true
         ls -la /tmp/export/
 
