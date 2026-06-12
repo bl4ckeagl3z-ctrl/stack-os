@@ -17,7 +17,8 @@ jobs:
     - name: Setup pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
-        sudo cp /tmp/pmb/pmbootstrap.py /usr/local/bin/pmbootstrap
+        echo '#!/bin/bash' | sudo tee /usr/local/bin/pmbootstrap
+        echo 'python3 /tmp/pmb/pmbootstrap.py "$@"' | sudo tee -a /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
         pmbootstrap --version
 
