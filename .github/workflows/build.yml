@@ -3,53 +3,26 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-22.04
     timeout-minutes: 120
     steps:
     - uses: actions/checkout@v4
-
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y kpartx git python3 python3-pip
-
     - name: Setup pmbootstrap
       run: |
         git clone https://gitlab.postmarketos.org/postmarketOS/pmbootstrap.git /tmp/pmb
         sudo cp pmb_wrapper.py /usr/local/bin/pmbootstrap
         sudo chmod +x /usr/local/bin/pmbootstrap
         pmbootstrap --version
-
-    - name: Create pmbootstrap config
-      run: |
-        mkdir -p ~/.config
-        echo "[pmbootstrap]" > ~/.config/pmbootstrap.cfg
-        echo "device = samsung-degaswifi" >> ~/.config/pmbootstrap.cfg
-        echo "hostname = stack-os" >> ~/.config/pmbootstrap.cfg
-        echo "jobs = 2" >> ~/.config/pmbootstrap.cfg
-        echo "keymap = " >> ~/.config/pmbootstrap.cfg
-        echo "locale = de_DE.UTF-8" >> ~/.config/pmbootstrap.cfg
-        echo "mirror_alpine = https://dl-cdn.alpinelinux.org/alpine/" >> ~/.config/pmbootstrap.cfg
-        echo "timezone = UTC" >> ~/.config/pmbootstrap.cfg
-        echo "ui = xfce4" >> ~/.config/pmbootstrap.cfg
-        echo "ui_extras = False" >> ~/.config/pmbootstrap.cfg
-        echo "user = user" >> ~/.config/pmbootstrap.cfg
-        echo "work = /home/runner/.local/var/pmbootstrap" >> ~/.config/pmbootstrap.cfg
-        echo "channel = edge" >> ~/.config/pmbootstrap.cfg
-        echo "systemd = never" >> ~/.config/pmbootstrap.cfg
-        cat ~/.config/pmbootstrap.cfg
-
+    - name: Init pmbootstrap
+      run: printf '\n\nedge\nsamsung\ndegaswifi\ny\nuser\n\n\n\nxfce4\nnever\n' | pmbootstrap --details-to-stdout init
     - name: Pull pmaports
       run: pmbootstrap pull
-
     - name: Install attempt 1
-      run: |
-        pmbootstrap install \
-          --android-recovery-zip \
-          --recovery-install-partition=data \
-          --password stackos123 || true
-
+      run: pmbootstrap install --android-recovery-zip --recovery-install-partition=data --password stackos123 || true
     - name: Apply fixes
       run: |
         ROOTFS="$HOME/.local/var/pmbootstrap/chroot_rootfs_samsung-degaswifi"
@@ -59,20 +32,13 @@ jobs:
         sudo truncate -s 0 "$ROOTFS/usr/share/mkinitfs/modules/00-device-samsung-degaswifi.modules" || true
         sudo truncate -s 0 "$ROOTFS/usr/share/mkinitfs/modules-extra/00-default-extra.modules" || true
         pmbootstrap chroot -r -- apk add mkbootimg-osm0sis
-
     - name: Install attempt 2
-      run: |
-        pmbootstrap install \
-          --android-recovery-zip \
-          --recovery-install-partition=data \
-          --password stackos123
-
+      run: pmbootstrap install --android-recovery-zip --recovery-install-partition=data --password stackos123
     - name: Export image
       run: |
         mkdir -p /tmp/export
         pmbootstrap export /tmp/export
         ls -la /tmp/export/
-
     - uses: actions/upload-artifact@v4
       with:
         name: stack-os-degaswifi
